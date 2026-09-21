@@ -15,8 +15,8 @@ export const profile = {
   summary:
     'Développeur passionné, je conçois des solutions simples et efficaces. Avec une bonne base en backend, des bases de données solides et des outils d’intégration, je suis curieux et orienté résolution de problèmes. Motivé, je souhaite contribuer à des projets innovants et continuer à progresser.',
   socials: [
-    { label: 'GitHub', href: 'https://github.com/', icon: 'github' },
-    { label: 'LinkedIn', href: 'https://www.linkedin.com/', icon: 'linkedin' },
+    { label: 'GitHub', href: 'https://github.com/Id3471', icon: 'github' },
+    { label: 'LinkedIn', href: 'https://www.linkedin.com/in/ibrahima-zango-diallo-b45085299', icon: 'linkedin' },
     { label: 'Email', href: 'mailto:ootlouk94@gmail.com', icon: 'mail' },
   ],
   languages: [
