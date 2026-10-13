@@ -1,9 +1,9 @@
 import { useTypewriter } from "../../hooks";
-import { profile } from "../../data/profile";
+import { usePortfolio } from "../../hooks/usePortfolio";
 import { Button } from "../ui";
 import "./Hero.css";
 
-function CodeCard() {
+function CodeCard({ profile }) {
   const lines = [
     {
       n: 1,
@@ -18,7 +18,7 @@ function CodeCard() {
       code: [
         { t: "  nom", c: "prop" },
         { t: ": ", c: "p" },
-        { t: "'Ibrahima'", c: "str" },
+        { t: `'${profile.firstName}'`, c: "str" },
         { t: ",", c: "p" },
       ],
     },
@@ -27,7 +27,7 @@ function CodeCard() {
       code: [
         { t: "  role", c: "prop" },
         { t: ": ", c: "p" },
-        { t: "'Full Stack'", c: "str" },
+        { t: `'${profile.role}'`, c: "str" },
         { t: ",", c: "p" },
       ],
     },
@@ -49,7 +49,7 @@ function CodeCard() {
       code: [
         { t: "  base", c: "prop" },
         { t: ": ", c: "p" },
-        { t: "'Abidjan'", c: "str" },
+        { t: `'${profile.location}'`, c: "str" },
         { t: ",", c: "p" },
       ],
     },
@@ -110,6 +110,7 @@ function CodeCard() {
 }
 
 export default function Hero() {
+  const { profile, projects, skillGroups } = usePortfolio()
   const typed = useTypewriter(profile.roles);
 
   return (
@@ -125,7 +126,7 @@ export default function Hero() {
           </span>
 
           <h1 className="hero__title">
-            Bonjour, je suis <span className="gradient-text">Ibrahima</span>
+            Bonjour, je suis <span className="gradient-text">{profile.firstName}</span>
             <span className="hero__title-role mono">
               {typed}
               <span className="hero__caret" aria-hidden="true">
@@ -135,8 +136,7 @@ export default function Hero() {
           </h1>
 
           <p className="hero__subtitle">
-            Je conçois et développe des applications web et mobiles modernes —
-            de l’API au pixel, avec une obsession : la simplicité efficace.
+            {profile.summary}
           </p>
 
           <div className="hero__actions">
@@ -146,26 +146,31 @@ export default function Hero() {
             <Button href="#contact" variant="outline">
               Me contacter
             </Button>
+            {profile.cvUrl && (
+              <Button href={profile.cvUrl} variant="outline" external>
+                Télécharger mon CV
+              </Button>
+            )}
           </div>
 
           <div className="hero__stats">
             <div className="hero__stat">
-              <strong>10+</strong>
+              <strong>{skillGroups.reduce((total, group) => total + group.items.length, 0)}+</strong>
               <span>Technologies maîtrisées</span>
             </div>
             <div className="hero__stat">
-              <strong>6+</strong>
+              <strong>{projects.length}+</strong>
               <span>Projets réalisés</span>
             </div>
             <div className="hero__stat">
-              <strong>2</strong>
+              <strong>{profile.languages.length}</strong>
               <span>Langues parlées</span>
             </div>
           </div>
         </div>
 
         <div className="hero__visual">
-          <CodeCard />
+          <CodeCard profile={profile} />
         </div>
       </div>
 

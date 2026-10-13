@@ -1,8 +1,19 @@
 import react from '@vitejs/plugin-react'
-import { defineConfig } from 'vite'
+import { defineConfig, loadEnv } from 'vite'
 
 // https://vite.dev/config/
-export default defineConfig({
-  base: '/web-Porto/',
-  plugins: [react()],
+export default defineConfig(({ mode }) => {
+  const { BACKEND_URL } = loadEnv(mode, '.', '')
+  const backendUrl = BACKEND_URL || 'http://127.0.0.1:8000'
+
+  return {
+    base: '/web-Porto/',
+    plugins: [react()],
+    server: {
+      proxy: {
+        '/admin-api': backendUrl,
+        '/portfolio-content': backendUrl,
+      },
+    },
+  }
 })

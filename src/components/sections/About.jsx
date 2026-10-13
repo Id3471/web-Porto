@@ -1,4 +1,4 @@
-import { profile } from '../../data/profile'
+import { usePortfolio } from '../../hooks/usePortfolio'
 import { Icon, Section, Tag } from '../ui'
 import './About.css'
 
@@ -34,6 +34,8 @@ function LanguageBar({ name, level, percent }) {
 }
 
 export default function About() {
+  const { profile } = usePortfolio()
+
   return (
     <Section id="about" eyebrow="01 · À propos" title="Qui suis-je ?">
       <div className="about__grid">

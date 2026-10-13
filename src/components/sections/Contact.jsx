@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { profile } from '../../data/profile'
+import { usePortfolio } from '../../hooks/usePortfolio'
 import { Icon, Section } from '../ui'
 import './Contact.css'
 
@@ -20,6 +20,7 @@ function ContactCard({ icon, label, value, href }) {
 const initialForm = { name: '', email: '', subject: '', message: '' }
 
 export default function Contact() {
+  const { profile } = usePortfolio()
   const [form, setForm] = useState(initialForm)
   const [errors, setErrors] = useState({})
   const [sent, setSent] = useState(false)

@@ -1,4 +1,4 @@
-import { skillGroups, softSkills } from '../../data/skills'
+import { usePortfolio } from '../../hooks/usePortfolio'
 import { Icon, Section, Tag } from '../ui'
 import './Skills.css'
 
@@ -12,6 +12,8 @@ function cellIntensity(row, col) {
 }
 
 export default function Skills() {
+  const { skillGroups, softSkills } = usePortfolio()
+
   return (
     <Section id="skills" eyebrow="02 · Compétences" title="Ma boîte à outils" className="section--alt">
       <div className="skills__grid">

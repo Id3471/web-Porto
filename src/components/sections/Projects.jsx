@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { projectCategories, projects } from '../../data/projects'
+import { usePortfolio } from '../../hooks/usePortfolio'
 import { Icon, Section, Tag } from '../ui'
 import './Projects.css'
 
@@ -61,6 +61,7 @@ function ProjectCard({ project, index }) {
 }
 
 export default function Projects() {
+  const { projectCategories, projects } = usePortfolio()
   const [category, setCategory] = useState('Tous')
   const filtered = category === 'Tous' ? projects : projects.filter((p) => p.category === category)
 

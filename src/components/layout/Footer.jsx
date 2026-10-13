@@ -1,8 +1,10 @@
-import { navLinks, profile } from '../../data/profile'
+import { navLinks } from '../../data/profile'
+import { usePortfolio } from '../../hooks/usePortfolio'
 import { Icon } from '../ui'
 import './Footer.css'
 
 export default function Footer() {
+  const { profile } = usePortfolio()
   const year = new Date().getFullYear()
 
   return (
@@ -20,6 +22,7 @@ export default function Footer() {
           {navLinks.slice(1).map((link) => (
             <a key={link.id} href={`#${link.id}`}>{link.label}</a>
           ))}
+          <a href={`${import.meta.env.BASE_URL}#admin`}>Administration</a>
         </nav>
 
         <div className="footer__socials">

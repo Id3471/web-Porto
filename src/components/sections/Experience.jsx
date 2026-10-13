@@ -1,5 +1,4 @@
-import { education, experiences } from '../../data/experience'
-import { certifications } from '../../data/experience'
+import { usePortfolio } from '../../hooks/usePortfolio'
 import { Icon, Section, Tag } from '../ui'
 import './Experience.css'
 
@@ -35,6 +34,8 @@ function TimelineItem({ icon, title, subtitle, period, location, description, ta
 }
 
 export default function Experience() {
+  const { education, experiences, certifications } = usePortfolio()
+
   return (
     <>
       <Section id="experience" eyebrow="04 · Parcours" title="Expérience professionnelle">
