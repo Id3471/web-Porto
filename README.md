@@ -39,7 +39,10 @@ src/
 │   ├── usePortfolio.js       #    Accès aux données éditoriales partagées
 │   └── index.js
 ├── admin/                    # Interface de gestion responsive
-│   ├── Admin.jsx             #    Connexion, édition et paramètres
+│   ├── Admin.jsx             #    Session, sauvegarde et composition des onglets
+│   ├── adminConfig.js        #    Onglets, libellés et modèles de contenu
+│   ├── components/           #    Champs, éditeurs de listes et structure commune
+│   ├── pages/                #    Une page par onglet de l’administration
 │   └── Admin.css             #    Styles de l'espace d'administration
 └── components/
     ├── ui/                   # Primitives génériques
