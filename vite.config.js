@@ -12,6 +12,8 @@ export default defineConfig(({ mode }) => {
     server: {
       proxy: {
         '/admin-api': backendUrl,
+        '/contact': backendUrl,
+        '/cv': backendUrl,
         '/portfolio-content': backendUrl,
       },
     },

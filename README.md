@@ -5,12 +5,13 @@ architecture modulaire par composants.
 
 ## ✨ Fonctionnalités
 
-- 🌗 **Thème clair / sombre** persistant (localStorage)
+- 🌙 **Interface sombre** avec palette nocturne cohérente
 - 🧭 **Navbar sticky** avec scroll-spy, barre de progression et menu mobile
 - ⌨️ **Effet machine à écrire** sur les rôles dans le Hero
 - 🎞️ **Animations d'apparition** au scroll (IntersectionObserver)
 - 🗂️ **Filtre de projets** par catégorie (Web, Mobile, Data, IA)
-- 📬 **Formulaire de contact** avec validation et brouillon mailto prérempli
+- 📬 **Formulaire de contact** avec envoi direct par e-mail et confirmation
+- 📄 **Téléchargement du CV** après publication du PDF dans l’administration
 - ♿ Accessible : navigation clavier, `aria-*`, `prefers-reduced-motion` respecté
 - 📱 100 % responsive (desktop, tablette, mobile)
 
@@ -21,20 +22,25 @@ src/
 ├── main.jsx                  # Point d'entrée
 ├── App.jsx                   # Composition de la page
 ├── App.css                   # Styles partagés (sections, boutons, tags)
-├── index.css                 # Design system (variables, thèmes, utilitaires)
+├── index.css                 # Design system sombre (variables, utilitaires)
 ├── assets/
 ├── data/                     # ← Toutes les données éditables
 │   ├── profile.js            #    Identité, contacts, langues, centres d'intérêt
 │   ├── skills.js             #    Compétences techniques & qualités
 │   ├── projects.js           #    Projets du portfolio
-│   └── experience.js         #    Expériences, formation, certifications
+│   ├── experience.js         #    Expériences, formation, certifications
+│   ├── PortfolioContext.jsx  #    Chargement des données publiques de l'API
+│   └── portfolioDefaults.js  #    Valeurs de repli pour le contenu éditorial
 ├── hooks/                    # Logique réutilisable
-│   ├── useTheme.js           #    Thème clair/sombre persistant
 │   ├── useActiveSection.js   #    Scroll-spy (IntersectionObserver)
 │   ├── useScrolled.js        #    Détection de scroll
 │   ├── useReveal.js          #    Animations d'apparition
 │   ├── useTypewriter.js      #    Effet machine à écrire
+│   ├── usePortfolio.js       #    Accès aux données éditoriales partagées
 │   └── index.js
+├── admin/                    # Interface de gestion responsive
+│   ├── Admin.jsx             #    Connexion, édition et paramètres
+│   └── Admin.css             #    Styles de l'espace d'administration
 └── components/
     ├── ui/                   # Primitives génériques
     │   ├── Icon.jsx          #    Set d'icônes SVG centralisé
@@ -42,7 +48,7 @@ src/
     │   ├── Button.jsx        #    Bouton polymorphe (a / button)
     │   └── Tag.jsx
     ├── layout/
-    │   ├── Navbar.jsx        #    Navigation + thème + menu mobile
+    │   ├── Navbar.jsx        #    Navigation + menu mobile
     │   └── Footer.jsx
     └── sections/             # Une section = un dossier de la page
         ├── Hero.jsx          #    Bannière d'introduction
@@ -102,6 +108,12 @@ Pour activer ces fonctions :
    de session sécurisés compatibles avec les requêtes inter-sites et HTTPS ;
    un reverse proxy sur le même site est recommandé lorsque le navigateur
    bloque les cookies tiers.
+6. Pour recevoir les messages du formulaire, configurez dans `backend/.env`
+   un transport SMTP fonctionnel, l’adresse expéditrice vérifiée
+   `MAIL_FROM_ADDRESS` et la boîte destinataire `CONTACT_TO_EMAIL`. Les
+   identifiants du fournisseur e-mail restent dans `.env` et ne doivent jamais
+   être publiés. En local, les appels `/contact` et `/cv` sont aussi transmis
+   au backend par le proxy Vite.
 
 Le contenu d’origine sert de valeur initiale jusqu’au premier enregistrement.
 Les routes privées exigent une session Laravel, un compte administrateur et un

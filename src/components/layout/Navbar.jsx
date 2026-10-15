@@ -1,13 +1,14 @@
 import { useEffect, useState } from 'react'
-import { useActiveSection, useScrolled, useTheme } from '../../hooks'
-import { navLinks, profile } from '../../data/profile'
+import { useActiveSection, useScrolled } from '../../hooks'
+import { navLinks } from '../../data/profile'
+import { usePortfolio } from '../../hooks/usePortfolio'
 import { Icon } from '../ui'
 import './Navbar.css'
 
 export default function Navbar() {
   const [open, setOpen] = useState(false)
   const [progress, setProgress] = useState(0)
-  const { theme, toggleTheme } = useTheme()
+  const { profile } = usePortfolio()
   const scrolled = useScrolled(30)
   const active = useActiveSection(navLinks.map((l) => l.id))
 
@@ -24,9 +25,15 @@ export default function Navbar() {
 
   // Close the mobile menu when resizing back to desktop
   useEffect(() => {
-    const onResize = () => window.innerWidth > 860 && setOpen(false)
+    const onResize = () => window.innerWidth > 1050 && setOpen(false)
     window.addEventListener('resize', onResize)
     return () => window.removeEventListener('resize', onResize)
+  }, [])
+
+  useEffect(() => {
+    const onKeyDown = (event) => event.key === 'Escape' && setOpen(false)
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
   }, [])
 
   const goTo = (event, id) => {
@@ -38,10 +45,10 @@ export default function Navbar() {
   return (
     <header className={`navbar ${scrolled ? 'navbar--scrolled' : ''}`}>
       <div className="container navbar__inner">
-        <a href="#hero" className="navbar__brand" onClick={(e) => goTo(e, 'hero')}>
+        <a href="#hero" className="navbar__brand" onClick={(e) => goTo(e, 'hero')} aria-label={`${profile.firstName}, accueil`}>
           <span className="navbar__logo">&lt;/&gt;</span>
           <span className="navbar__name">
-            Ibrahima<span className="gradient-text">.dev</span>
+            {profile.firstName}<span className="gradient-text">.dev</span>
           </span>
         </a>
 
@@ -66,15 +73,6 @@ export default function Navbar() {
         </nav>
 
         <div className="navbar__actions">
-          <button
-            type="button"
-            className="navbar__icon-btn"
-            onClick={toggleTheme}
-            aria-label={theme === 'dark' ? 'Activer le thème clair' : 'Activer le thème sombre'}
-            title={theme === 'dark' ? 'Mode clair' : 'Mode sombre'}
-          >
-            <Icon name={theme === 'dark' ? 'sun' : 'moon'} size={19} />
-          </button>
           <button
             type="button"
             className="navbar__icon-btn navbar__burger"

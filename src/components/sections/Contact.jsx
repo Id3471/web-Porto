@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { usePortfolio } from '../../hooks/usePortfolio'
+import { apiRequest } from '../../data/apiRequest'
 import { Icon, Section } from '../ui'
 import './Contact.css'
 
@@ -22,12 +23,16 @@ const initialForm = { name: '', email: '', subject: '', message: '' }
 export default function Contact() {
   const { profile } = usePortfolio()
   const [form, setForm] = useState(initialForm)
+  const [website, setWebsite] = useState('')
   const [errors, setErrors] = useState({})
-  const [sent, setSent] = useState(false)
+  const [feedback, setFeedback] = useState('')
+  const [feedbackType, setFeedbackType] = useState('')
+  const [sending, setSending] = useState(false)
 
   const update = (field) => (event) => {
     setForm((f) => ({ ...f, [field]: event.target.value }))
     setErrors((e) => ({ ...e, [field]: undefined }))
+    setFeedback('')
   }
 
   const validate = () => {
@@ -38,21 +43,31 @@ export default function Contact() {
     return next
   }
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault()
     const next = validate()
     setErrors(next)
     if (Object.keys(next).length > 0) return
 
-    const subject = encodeURIComponent(form.subject.trim() || `Contact portfolio — ${form.name}`)
-    const body = encodeURIComponent(
-      `Nom : ${form.name}\nEmail : ${form.email}\n\n${form.message}\n\n— Envoyé depuis le portfolio`,
-    )
-    window.location.href = `mailto:${profile.email}?subject=${subject}&body=${body}`
-
-    setSent(true)
-    setForm(initialForm)
-    setTimeout(() => setSent(false), 6000)
+    setSending(true)
+    setFeedback('')
+    try {
+      await apiRequest('/contact', {
+        method: 'POST',
+        body: { ...form, website },
+        csrf: true,
+      })
+      setForm(initialForm)
+      setWebsite('')
+      setErrors({})
+      setFeedback('Votre message a bien été envoyé. Je vous répondrai dès que possible.')
+      setFeedbackType('success')
+    } catch (error) {
+      setFeedback(error.message)
+      setFeedbackType('error')
+    } finally {
+      setSending(false)
+    }
   }
 
   return (
@@ -91,14 +106,32 @@ export default function Contact() {
           </div>
         </div>
 
-        <form className="contact__form reveal" onSubmit={handleSubmit} noValidate>
+        <form className="contact__form reveal" onSubmit={handleSubmit} noValidate aria-busy={sending}>
+          <header className="contact__form-header">
+            <h3>Écrivez-moi directement</h3>
+            <p>Votre message me sera transmis par e-mail.</p>
+          </header>
+          <div className="contact__honeypot" aria-hidden="true">
+            <label htmlFor="contact-website">Ne pas remplir ce champ</label>
+            <input
+              id="contact-website"
+              name="website"
+              type="text"
+              tabIndex="-1"
+              autoComplete="off"
+              value={website}
+              onChange={(event) => setWebsite(event.target.value)}
+            />
+          </div>
           <div className="contact__row">
             <div className="contact__field">
-              <label htmlFor="contact-name">Nom</label>
+              <label htmlFor="contact-name">Nom <span aria-hidden="true">*</span></label>
               <input
                 id="contact-name"
                 type="text"
                 placeholder="Votre nom"
+                maxLength="120"
+                required
                 value={form.name}
                 onChange={update('name')}
                 autoComplete="name"
@@ -107,11 +140,13 @@ export default function Contact() {
             </div>
 
             <div className="contact__field">
-              <label htmlFor="contact-email">Email</label>
+              <label htmlFor="contact-email">E-mail <span aria-hidden="true">*</span></label>
               <input
                 id="contact-email"
                 type="email"
                 placeholder="vous@exemple.com"
+                maxLength="254"
+                required
                 value={form.email}
                 onChange={update('email')}
                 autoComplete="email"
@@ -121,31 +156,41 @@ export default function Contact() {
           </div>
 
           <div className="contact__field">
-            <label htmlFor="contact-subject">Sujet (optionnel)</label>
+            <label htmlFor="contact-subject">Sujet <span>(optionnel)</span></label>
             <input
               id="contact-subject"
               type="text"
               placeholder="Objet de votre message"
+              maxLength="160"
               value={form.subject}
               onChange={update('subject')}
             />
           </div>
 
           <div className="contact__field">
-            <label htmlFor="contact-message">Message</label>
+            <label htmlFor="contact-message">Message <span aria-hidden="true">*</span></label>
             <textarea
               id="contact-message"
               rows="5"
               placeholder="Parlez-moi de votre projet…"
+              minLength="10"
+              maxLength="8000"
+              required
               value={form.message}
               onChange={update('message')}
             />
             {errors.message && <span className="contact__error">{errors.message}</span>}
           </div>
 
-          <button type="submit" className="btn btn--primary btn--lg contact__submit">
-            <Icon name="send" size={17} />
-            {sent ? 'Brouillon prêt — envoyez !' : 'Envoyer le message'}
+          {feedback && (
+            <p className={`contact__feedback contact__feedback--${feedbackType}`} role={feedbackType === 'error' ? 'alert' : 'status'}>
+              {feedback}
+            </p>
+          )}
+
+          <button type="submit" className="btn btn--primary btn--lg contact__submit" disabled={sending}>
+            {!sending && <Icon name="send" size={17} />}
+            {sending ? 'Envoi en cours…' : 'Envoyer le message'}
           </button>
         </form>
       </div>

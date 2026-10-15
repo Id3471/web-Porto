@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { defaultContent, mergePortfolioContent } from '../data/portfolioDefaults'
-import { portfolioApiUrl } from '../data/portfolioApi'
+import { apiRequest } from '../data/apiRequest'
 import './Admin.css'
 
 const tabs = [
@@ -87,37 +87,23 @@ const labels = {
   socials: 'Liens publics',
 }
 
-async function request(path, { method = 'GET', body, file, csrf = false } = {}) {
-  const headers = { Accept: 'application/json' }
-  if (body) headers['Content-Type'] = 'application/json'
+function ListField({ label, value, onChange }) {
+  const [draft, setDraft] = useState(() => value.join('\n'))
 
-  if (csrf) {
-    const csrfResponse = await fetch(portfolioApiUrl('/admin-api/csrf'), {
-      credentials: 'include',
-      headers,
-    })
-    if (!csrfResponse.ok) throw new Error('Impossible de préparer la session sécurisée.')
-    const { csrfToken } = await csrfResponse.json()
-    headers['X-CSRF-TOKEN'] = csrfToken
-  }
-
-  const response = await fetch(portfolioApiUrl(path), {
-    method,
-    credentials: 'include',
-    headers,
-    body: file || (body ? JSON.stringify(body) : undefined),
-  })
-  const result = await response.json().catch(() => null)
-  if (!response.ok) {
-    const validationMessage = Object.values(result?.errors || {}).flat()[0]
-    const fallbackMessage = result
-      ? 'Une erreur est survenue. Réessayez.'
-      : `Réponse invalide du serveur (${response.status}). Vérifiez que l’API Laravel est disponible.`
-    const error = new Error(validationMessage || result?.message || fallbackMessage)
-    error.status = response.status
-    throw error
-  }
-  return result
+  return (
+    <label className="admin__field">
+      <span>{label} <small>Une valeur par ligne</small></span>
+      <textarea
+        value={draft}
+        rows="3"
+        onChange={(event) => {
+          const nextDraft = event.target.value
+          setDraft(nextDraft)
+          onChange(nextDraft.split('\n').map((item) => item.trim()).filter(Boolean))
+        }}
+      />
+    </label>
+  )
 }
 
 function Field({ field, value, onChange }) {
@@ -134,12 +120,7 @@ function Field({ field, value, onChange }) {
   }
 
   if (Array.isArray(value)) {
-    return (
-      <label className="admin__field">
-        <span>{label} <small>Une valeur par ligne</small></span>
-        <textarea value={value.join('\n')} rows="3" onChange={(event) => onChange(event.target.value.split('\n').map((item) => item.trim()).filter(Boolean))} />
-      </label>
-    )
+    return <ListField label={label} value={value} onChange={onChange} />
   }
 
   if (value && typeof value === 'object') {
@@ -199,22 +180,34 @@ function CollectionEditor({ title, items, onChange, template, emptyText }) {
       <div className="admin__records">
         {items.map((item, index) => (
           <article className="admin__record" key={`${item.id || item.name || title}-${index}`}>
-            <div className="admin__record-heading">
-              <h4>{item.title || item.name || item.company || item.label || `Élément ${index + 1}`}</h4>
-              <button
-                type="button"
-                className="admin__text-button admin__text-button--danger"
-                aria-label={`Supprimer ${item.title || item.name || item.company || title}`}
-                onClick={() => onChange(items.filter((_, itemIndex) => itemIndex !== index))}
-              >
-                Supprimer
-              </button>
-            </div>
-            <div className="admin__fields">
-              {Object.entries(item).map(([field, value]) => (
-                <Field key={field} field={field} value={value} onChange={(nextValue) => updateItem(index, field, nextValue)} />
-              ))}
-            </div>
+            <details className="admin__record-details">
+              <summary className="admin__record-summary">
+                <span className="admin__record-title">{item.title || item.name || item.company || item.label || `Élément ${index + 1}`}</span>
+                <span className="admin__record-action">Modifier les détails</span>
+              </summary>
+              <div className="admin__record-content">
+                <div className="admin__fields">
+                  {Object.entries(item).map(([field, value]) => (
+                    <Field key={field} field={field} value={value} onChange={(nextValue) => updateItem(index, field, nextValue)} />
+                  ))}
+                </div>
+                <div className="admin__record-footer">
+                  <span>Les changements sont publiés après enregistrement.</span>
+                  <button
+                    type="button"
+                    className="admin__text-button admin__text-button--danger"
+                    aria-label={`Supprimer ${item.title || item.name || item.company || title}`}
+                    onClick={() => {
+                      if (window.confirm(`Supprimer « ${item.title || item.name || item.company || item.label || `Élément ${index + 1}`} » ?`)) {
+                        onChange(items.filter((_, itemIndex) => itemIndex !== index))
+                      }
+                    }}
+                  >
+                    Supprimer cet élément
+                  </button>
+                </div>
+              </div>
+            </details>
           </article>
         ))}
       </div>
@@ -284,6 +277,7 @@ function Overview({ content, user }) {
 
 export default function Admin() {
   const [content, setContent] = useState(defaultContent)
+  const [savedContent, setSavedContent] = useState(defaultContent)
   const [user, setUser] = useState(null)
   const [activeTab, setActiveTab] = useState('overview')
   const [sessionReady, setSessionReady] = useState(false)
@@ -292,15 +286,32 @@ export default function Admin() {
   const [error, setError] = useState('')
   const [account, setAccount] = useState({ username: '', current_password: '', password: '', password_confirmation: '' })
   const [cvFile, setCvFile] = useState(null)
+  const isDirty = JSON.stringify(content) !== JSON.stringify(savedContent)
 
   useEffect(() => {
-    request('/admin-api/session')
+    if (!isDirty) return undefined
+
+    const warnBeforeLeave = (event) => {
+      event.preventDefault()
+      event.returnValue = ''
+    }
+
+    window.addEventListener('beforeunload', warnBeforeLeave)
+    return () => window.removeEventListener('beforeunload', warnBeforeLeave)
+  }, [isDirty])
+
+  useEffect(() => {
+    apiRequest('/admin-api/session')
       .then(({ user: currentUser }) => {
         setUser(currentUser)
-        return request('/portfolio-content')
+        return apiRequest('/portfolio-content')
       })
       .then(({ data }) => {
-        if (data) setContent(mergePortfolioContent(data))
+        if (data) {
+          const publishedContent = mergePortfolioContent(data)
+          setContent(publishedContent)
+          setSavedContent(publishedContent)
+        }
       })
       .catch((requestError) => {
         if (requestError.status !== 401) setError(requestError.message)
@@ -318,14 +329,18 @@ export default function Admin() {
     setBusy(true)
     setError('')
     try {
-      const result = await request('/admin-api/login', {
+      const result = await apiRequest('/admin-api/login', {
         method: 'POST',
         body: { username, password },
         csrf: true,
       })
       setUser(result.user)
-      const { data } = await request('/portfolio-content')
-      if (data) setContent(mergePortfolioContent(data))
+      const { data } = await apiRequest('/portfolio-content')
+      if (data) {
+        const publishedContent = mergePortfolioContent(data)
+        setContent(publishedContent)
+        setSavedContent(publishedContent)
+      }
     } catch (requestError) {
       setError(requestError.message)
     } finally {
@@ -338,12 +353,14 @@ export default function Admin() {
     setError('')
     setNotice('')
     try {
-      const { data } = await request('/admin-api/content', {
+      const { data } = await apiRequest('/admin-api/content', {
         method: 'PUT',
         body: { data: content },
         csrf: true,
       })
-      setContent(mergePortfolioContent(data))
+      const publishedContent = mergePortfolioContent(data)
+      setContent(publishedContent)
+      setSavedContent(publishedContent)
       setNotice('Modifications enregistrées. Elles sont visibles sur le portfolio public.')
     } catch (requestError) {
       setError(requestError.message)
@@ -363,7 +380,7 @@ export default function Admin() {
         delete payload.password
         delete payload.password_confirmation
       }
-      const { user: updatedUser } = await request('/admin-api/account', {
+      const { user: updatedUser } = await apiRequest('/admin-api/account', {
         method: 'PUT',
         body: payload,
         csrf: true,
@@ -390,8 +407,16 @@ export default function Admin() {
     const formData = new FormData()
     formData.append('cv', cvFile)
     try {
-      const { cvUrl } = await request('/admin-api/cv', { method: 'POST', file: formData, csrf: true })
-      updateProfile('cvUrl', cvUrl)
+      const { cvUrl } = await apiRequest('/admin-api/cv', { method: 'POST', file: formData, csrf: true })
+      const nextContent = {
+        ...content,
+        profile: { ...content.profile, cvUrl },
+      }
+      setContent(nextContent)
+      setSavedContent((current) => ({
+        ...current,
+        profile: { ...current.profile, cvUrl },
+      }))
       setCvFile(null)
       event.target.reset()
       setNotice('Votre CV a été remplacé.')
@@ -403,9 +428,13 @@ export default function Admin() {
   }
 
   const logout = async () => {
+    if (isDirty && !window.confirm('Des changements ne sont pas enregistrés. Voulez-vous vraiment vous déconnecter ?')) {
+      return
+    }
+
     setBusy(true)
     try {
-      await request('/admin-api/logout', { method: 'POST', csrf: true })
+      await apiRequest('/admin-api/logout', { method: 'POST', csrf: true })
       setUser(null)
       setNotice('')
       setError('')
@@ -438,6 +467,9 @@ export default function Admin() {
               className={`admin__tab ${activeTab === id ? 'is-active' : ''}`}
               aria-current={activeTab === id ? 'page' : undefined}
               onClick={() => {
+                if (isDirty && !window.confirm('Vos changements ne sont pas enregistrés. Voulez-vous les conserver pour continuer plus tard ?')) {
+                  return
+                }
                 setActiveTab(id)
                 setNotice('')
                 setError('')
@@ -574,9 +606,12 @@ export default function Admin() {
         {notice && <p className="admin__notice admin__notice--success" role="status">{notice}</p>}
         {isContentTab && (
           <div className="admin__save-bar">
-            <span>Les changements ne sont pas publiés tant qu’ils ne sont pas enregistrés.</span>
-            <button className="admin__button admin__button--primary" type="button" disabled={busy} onClick={saveContent}>
-              {busy ? 'Enregistrement…' : 'Enregistrer les modifications'}
+            <span className={isDirty ? 'admin__save-status is-dirty' : 'admin__save-status'}>
+              <span className="admin__save-status-dot" aria-hidden="true" />
+              {isDirty ? 'Modifications non enregistrées' : 'Toutes les modifications sont enregistrées'}
+            </span>
+            <button className="admin__button admin__button--primary" type="button" disabled={busy || !isDirty} onClick={saveContent}>
+              {busy ? 'Enregistrement…' : isDirty ? 'Enregistrer les modifications' : 'Contenu à jour'}
             </button>
           </div>
         )}

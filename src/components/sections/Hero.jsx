@@ -1,5 +1,6 @@
 import { useTypewriter } from "../../hooks";
 import { usePortfolio } from "../../hooks/usePortfolio";
+import { portfolioApiUrl } from "../../data/portfolioApi";
 import { Button } from "../ui";
 import "./Hero.css";
 
@@ -146,9 +147,13 @@ export default function Hero() {
             <Button href="#contact" variant="outline">
               Me contacter
             </Button>
-            {profile.cvUrl && (
-              <Button href={profile.cvUrl} variant="outline" external>
+            {profile.cvUrl ? (
+              <Button href={portfolioApiUrl('/cv')} variant="outline" download>
                 Télécharger mon CV
+              </Button>
+            ) : (
+              <Button variant="outline" disabled title="Le CV sera disponible après son ajout dans l’administration">
+                CV bientôt disponible
               </Button>
             )}
           </div>

@@ -43,7 +43,7 @@ export default function Footer() {
 
       <div className="container footer__bottom">
         <p>
-          © {year} {profile.fullName} — Conçu et développé avec React.
+          © {year} {profile.fullName}
         </p>
       </div>
     </footer>

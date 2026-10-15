@@ -15,6 +15,10 @@
   transition: all 0.2s ease;
 }
 
+.projects__filter:focus-visible {
+  outline-offset: 3px;
+}
+
 .projects__filter:hover {
   border-color: var(--accent);
   color: var(--text);
@@ -28,7 +32,7 @@
 
 .projects__grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(310px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr));
   gap: 1.3rem;
   margin-top: 1.6rem;
 }
@@ -56,10 +60,6 @@
   padding: 1.35rem 1.4rem;
   color: #fff;
   background: linear-gradient(135deg, color-mix(in srgb, var(--accent) 85%, black), color-mix(in srgb, var(--accent-2) 70%, black));
-}
-
-[data-theme='light'] .project-card__banner {
-  color: #fff;
 }
 
 .project-card__banner[data-category='Mobile'] {
